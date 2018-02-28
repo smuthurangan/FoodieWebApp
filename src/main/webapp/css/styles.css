@@ -15,13 +15,7 @@
     color: #fff;
     margin: -16px -16px 16px -16px;
 }
-                      .form-style-6 label{
-                          font: 95% Arial, Helvetica, sans-serif;
-                          max-width: 400px;
-                          margin: 10px auto;
-                          padding: 1px;
-                          background: #F7F7F7;
-                      }
+
 .form-style-6 input[type="text"],
 .form-style-6 input[type="date"],
 .form-style-6 input[type="datetime"],
