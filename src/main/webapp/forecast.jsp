@@ -4,6 +4,13 @@
 <%@ page import="org.jfree.chart.*" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.awt.image.BufferedImage" %>
+<%@ page import="org.jfree.chart.axis.NumberAxis" %>
+<%@ page import="org.jfree.chart.axis.NumberTickUnit" %>
+<%@ page import="org.jfree.chart.plot.CategoryPlot" %>
+<%@ page import="org.jfree.chart.axis.ValueAxis" %>
+<%@ page import="java.text.NumberFormat" %>
+<%@ page import="org.jfree.data.RangeType" %>
+<%@ page import="org.jfree.chart.axis.CategoryAxis" %>
 <%LinkedHashMap<String, String> CACHED_PREDS = new LinkedHashMap();%>
 <!DOCTYPE html>
 <html>
@@ -30,25 +37,27 @@
 
     <script>
         $(document).ready(function () {
-            var startDate = new Date( 2017,4-1,23);
-            var endDate  = new Date(2017,5-1,30);
-            $( "#startdate" ).datepicker({
+            $('#aboutus').hide();
+            $('#formus').show();
+            var startDate = new Date(2017, 4 - 1, 23);
+            var endDate = new Date(2017, 5 - 1, 30);
+            $("#startdate").datepicker({
                 inline: true,
-                minDate:startDate,
+                minDate: startDate,
                 maxDate: endDate,
                 dateFormat: 'yy-mm-dd'
             });
-            $( "#enddate" ).datepicker({
+            $("#enddate").datepicker({
                 inline: true,
-                minDate:startDate,
+                minDate: startDate,
                 maxDate: endDate,
                 dateFormat: 'yy-mm-dd'
             });
             $(function () {
                 $('#formselection').on('submit', function (e) {
                     var valuestr = $('#selectVal').val();
-                    alert(valuestr)
-                    if(valuestr.startsWith("selected")) {
+
+                    if (valuestr.startsWith("selected")) {
                         alert("Please select some valid entry");
                         return false;
                     }
@@ -74,27 +83,28 @@
                 </ul>
             </li>
             <li>
-                <a href="">About Us</a>
+                <a href="javascript:$('#aboutus').show();$('#formus').hide();">About Us</a>
             </li>
         </ul>
 
 
         <%
-            final String message = (String) request.getParameter("by");
+            String message = (String) request.getParameter("by");
+            if (message == null) message = "rest";
             String select = "Select a Restaurant";
             BufferedReader reader = null;
             int count = -1;
             try {
                 String fileName = "pred.csv";
-                if(message != null && message.equalsIgnoreCase("area")) {
+                if (message != null && message.equalsIgnoreCase("area")) {
                     fileName = "pred_area.csv";
                     select = "Select an Area";
                 }
-                if(message != null && message.equalsIgnoreCase("genre")) {
+                if (message != null && message.equalsIgnoreCase("genre")) {
                     fileName = "pred_genre.csv";
                     select = "Select a Genre";
                 }
-                if(message != null && message.equalsIgnoreCase("rest")) {
+                if (message != null && message.equalsIgnoreCase("rest")) {
                     fileName = "pred.csv";
                     select = "Select a Restaurant";
                 }
@@ -136,8 +146,11 @@
 
             String text = request.getParameter("selectVal");
             String start = request.getParameter("startdate");
+            String startVal = "Enter a Start Date";
             String end = request.getParameter("enddate");
-
+            String endVal = "Enter a End Date";
+            if(start != null) startVal = start;
+            if(end != null) endVal = end;
 
             String imgSrc = null;
             if (text != null && start != null && end != null) {
@@ -166,42 +179,54 @@
                         "Visitors Forecast Bar Chart", "Date", "Visitors", barDataset,
                         PlotOrientation.HORIZONTAL, false, true, false);
 
+                CategoryPlot plot = chart.getCategoryPlot();
+                CategoryAxis xAxis = plot.getDomainAxis();
+                NumberAxis numberAxis = (NumberAxis)plot.getRangeAxis();
+                numberAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+
+
                 BufferedImage buf = chart.createBufferedImage(600, 400, null);
                 byte[] encoded = Base64.getEncoder().encode(ChartUtilities.encodeAsPNG(buf));
                 imgSrc = new String(encoded);
             }
         %>
 
-        <form id = "formselection" action="forecast.jsp">
+        <form id="formselection" action="forecast.jsp">
             <p>
             <div class="form-style-6">
+            <span id="formus">
                 <select name="selectVal" id="selectVal">
                     <% if (text == null) { %>
-                    <option value="selected"><%=select%></option>
-                    <% } %>
+                    <option selected><%=select%>
+                    </option>
                     <%
                         for (int i = 0; i < spinnerArray.size(); i++) {
                             String val = spinnerArray.get(i).toString();
-                            if (text != null && text.equalsIgnoreCase(text)) { %>
-                    <option value=selected><%=text%>
-                    <%
-                    } else { %>
-                    <option value="<%=val %>"><%=val %>
-                    <%
-                        }
                     %>
+                    <option value="<%=val %>"><%=val %> <%
+                            }
+                        %>
+                            <% } else { %>
+                            <%
+                            for (int i = 0; i < spinnerArray.size(); i++) {
+                                String val = spinnerArray.get(i).toString();
+                                if (text != null && text.equalsIgnoreCase(val)) {
+                                %>
+                    <option selected><%=val%>
+                            <% } else { %>
+                    <option value="<%=val%>"><%=val%>
+                            <% } %>
 
-                    </option>
-                    <%} %>
+                            <% }
+                    } %>
+
                 </select>
                 <br>
-            <label for="startdate">Start Date</label>
-            <input type="text" id="startdate" name="startdate">
+                <input type="text" id="startdate" name="startdate" value="<%=startVal%>">
                 <br>
-            <label for="enddate">End Date</label>
-            <input type="text" id="enddate" name="enddate">
+                <input type="text" id="enddate" name="enddate" value="<%=endVal%>">
                 <br>
-                <input type="hidden" name="by" value="<%=message%>">
+                <input type="hidden" name="by" id="by" value="<%=message%>">
                 <input type="submit">
                 <% if (text != null && start != null && end != null) { %>
                 <img id="ItemPreview" src=""/>
@@ -209,7 +234,17 @@
                     document.getElementById("ItemPreview").src = "data:image/png;base64,<%=imgSrc%>"
                 </script>
                 <% } %>
-            </div>
+
+            </span>
+        <span id="aboutus" style="font: small Arial, Helvetica, sans-serif;">
+            Foodie Analytics is a leading data analytics and consulting firm headquartered in Chicago, IL with 1,200 employees in the Americas. We bring in 15+ years of analytics experience in the hospitality industry, specializing in predictive modeling, business intelligence, mobile and web application development, and project management. Our approach to solve any big data problem begins with a clear understanding of the underlying business need and key management objectives. Our recommendations are based on thorough data analysis, evaluation of different modeling techniques, and latest technology solutions. Foodie Analytics works with some of the top players in the industry in solving mission-critical reporting and analytical needs and achieving high-impact business outcomes.
+            <br><br>
+            <u>Corporate Headquarters </u><br>
+                    401 N. Michigan Ave. <br>
+                    Chicago, IL 60611 <br>
+                    (847) 671-8000"
+        </span>
+        </div>
         </form>
     </div>
 </div>
